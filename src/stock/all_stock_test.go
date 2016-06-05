@@ -7,6 +7,6 @@ import (
 
 func Test_GetAllStock(t *testing.T) {
 	all := NewAllStock()
-	all.updateFromApi()
+	all.UpdateFromApi()
 	fmt.Println(all)
 }

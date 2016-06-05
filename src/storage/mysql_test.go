@@ -17,7 +17,9 @@ func Test_InsertDay(t *testing.T) {
 		High:   1.0,
 		Low:    1.0,
 	}
-	InsertTradeHis(day)
+	days := make([]*model.DayTrade, 1)
+	days := append(days, day)
+	InsertTradeHis(days)
 	t.Log("insert success")
 }
 
