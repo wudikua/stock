@@ -195,16 +195,16 @@ func GetAllStocks() []*model.Stock {
 		panic(err.Error())
 	}
 	defer stmt.Close()
-	rows := stmt.Query()
+	rows, _ := stmt.Query()
 	if rows == nil {
 		return nil
 	}
 	stocks := make([]*model.Stock, 0)
 	for rows.Next() {
 		stock := &model.Stock{}
-		err = row.Scan(&stock.Code, &stock.CnName)
+		err = rows.Scan(&stock.Code, &stock.CnName)
 		if err != nil {
-			return false
+			return nil
 		}
 		stock.Type = model.Code2Type(stock.Code)
 		stocks = append(stocks, stock)

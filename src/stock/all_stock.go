@@ -7,8 +7,8 @@ import (
 	"log"
 	"model"
 	"net/http"
-	"storage"
 	"regexp"
+	"storage"
 	"time"
 )
 
@@ -50,7 +50,11 @@ func NewAllStock() *AllStock {
 }
 
 func (this *AllStock) LoadFromStorage() {
-	this.Stocks = sotrage.GetAllStocks()
+	all := storage.GetAllStocks()
+	this.Stocks = make(map[string]*model.Stock)
+	for _, s := range all {
+		this.Stocks[s.Code] = s
+	}
 }
 
 func (this *AllStock) UpdateFromApi() {

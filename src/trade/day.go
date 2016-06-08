@@ -1,19 +1,19 @@
 package trade
 
 import (
+	"constant"
+	"encoding/csv"
+	"fmt"
+	"github.com/axgle/mahonia"
+	"io"
+	"io/ioutil"
+	"log"
 	"model"
 	"net/http"
-	"constant"
-	"time"
 	"storage"
-	"github.com/axgle/mahonia"
-	"io/ioutil"
-	"strings"
 	"strconv"
-	"fmt"
-	"log"
-	"io"
-	"encoding/csv"
+	"strings"
+	"time"
 )
 
 /**
@@ -29,14 +29,14 @@ func NewDayTradeHelper() *DayTradeHelper {
 
 func (this *DayTradeHelper) getTrade(stock *model.Stock, begin string, end string) []*model.DayTrade {
 	var url string
-	if (stock.Type == model.HU_A) {
+	if stock.Type == model.HU_A {
 		url = fmt.Sprintf(constant.DAY_TRADE_API, "0"+stock.Code, begin, end)
-	} else if (stock.Type == model.SHEN_A || stock.Type == model.CHUANGYE || stock.Type == model.ZHONG_XIAO) {
+	} else if stock.Type == model.SHEN_A || stock.Type == model.CHUANGYE || stock.Type == model.ZHONG_XIAO {
 		url = fmt.Sprintf(constant.DAY_TRADE_API, "1"+stock.Code, begin, end)
 	} else {
 		return nil
 	}
-	
+
 	log.Println("get trade", stock.Code, "from", begin, "to", end, url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -68,18 +68,18 @@ func (this *DayTradeHelper) getTrade(stock *model.Stock, begin string, end strin
 		High, _ := strconv.ParseFloat(cols[4], 32)
 		Volume, _ := strconv.Atoi(cols[11])
 		Money, _ := strconv.ParseFloat(cols[12], 32)
-		if (Open == 0) {
+		if Open == 0 {
 			continue
-		} 
+		}
 		days = append(days, &model.DayTrade{
-			Date: cols[0],
-			Code: strings.TrimLeft(cols[1], "'"),
-			Close: float32(Close),
-			High: float32(High),
-			Low: float32(Low),
-			Open: float32(Open),
+			Date:   cols[0],
+			Code:   strings.TrimLeft(cols[1], "'"),
+			Close:  float32(Close),
+			High:   float32(High),
+			Low:    float32(Low),
+			Open:   float32(Open),
 			Volume: Volume,
-			Money: int(Money),
+			Money:  int(Money),
 		})
 	}
 	return days
@@ -96,15 +96,19 @@ func (this *DayTradeHelper) Update(stock *model.Stock) {
 	var added []*model.DayTrade
 	if day == nil || day.Date == "" {
 		// init all
-		before := time.Unix(time.Now().Unix() - 3600*24*365*5, 0).Format("20060102")
+		before := time.Unix(time.Now().Unix()-3600*24*365*5, 0).Format("20060102")
 		added = this.getTrade(stock, before, now)
 	} else {
-		log.Println("has inserted ", stock.Code)
-		return
+		last, _ := time.Parse("2006-01-02", day.Date)
 		// init today
-		added = this.getTrade(stock, now, now)
+		from := time.Unix(last.Unix()+3600*24*1, 0).Format("20060102")
+		if from == now {
+			log.Println("has inserted ", stock.Code)
+			return
+		}
+		added = this.getTrade(stock, from, now)
 	}
-	
+
 	storage.InsertTradeHis(added)
 	log.Println("add ", stock.Code, len(added), " days trade info")
 }
